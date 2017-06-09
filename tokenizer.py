@@ -4,12 +4,15 @@ reserved = {
 	'print' : 'PRINT',
     'if' 	: 'IF',
     'else' 	: 'ELSE',
+    'elseif': 'ELSE_IF',
+    'while'	: 'WHILE',
 	'int' 	: 'INT_TYPE',
 	'double': 'DOUBLE_TYPE',
 	'char'	: 'CHAR_TYPE',
-	'void' 	: 'VOID_TYPE'
+	'void' 	: 'VOID_TYPE',
 }
-tokens = 	['MODULO', 'INT', 'DOUBLE', 'PLUS', 'MINUS', 'TIMES', 'DIVIDE', 'AND', 'OR', 'EQUALS', 'ASSIGN',
+tokens = 	['MODULO', 'INT', 'DOUBLE', 'PLUS', 'MINUS', 'TIMES', 'DIVIDE','AND', 'OR',
+			'EQUALS','NOT_EQUALS','ASSIGN','LESSER','LESSER_OR_EQ','GREATER','GREATER_OR_EQ','NOT',
 			'BRACE_OPEN', 'BRACE_CLOSE', 'ROUND_OPEN', 'ROUND_CLOSE', 'ARR_OPEN', 'ARR_CLOSE',
 			'SEMICOLON', 'ID'] +  list(reserved.values())
 t_ignore 		=' \t\n'
@@ -22,8 +25,14 @@ t_TIMES			=r'\*'
 t_DIVIDE		=r'/'
 t_AND			=r'&&'
 t_OR 			=r'\|\|'
-t_ASSIGN		=r'='
+t_NOT_EQUALS	=r'@='
 t_EQUALS		=r'=='
+t_ASSIGN		=r'='
+t_LESSER		=r'<'
+t_LESSER_OR_EQ	=r'<='
+t_GREATER		=r'>'
+t_GREATER_OR_EQ	=r'>='
+t_NOT			=r'@'
 t_BRACE_OPEN	=r'{'
 t_BRACE_CLOSE	=r'}'
 t_ROUND_OPEN	=r'\('
