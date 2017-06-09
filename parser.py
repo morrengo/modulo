@@ -47,9 +47,15 @@ def p_lines(p):
 	else :
 		p[0] = [p[1]]
 
+# def p_line(p):
+# 	'''line : assign SEMICOLON
+# 			| print SEMICOLON
+# 			| if
+# 			| while'''
+# 	p[0] = p[1]
+
 def p_line(p):
 	'''line : assign SEMICOLON
-			| declare SEMICOLON
 			| print SEMICOLON'''
 	p[0] = p[1]
 
@@ -57,21 +63,9 @@ def p_print(p):
 	'''print : PRINT expr'''
 	p[0] = Node('print',[p[2]])
 
-def p_declare(p):
-	'''declare : type identifier
-			   | type assign'''
-	p[0] = Node('declare', [p[1]]+[p[2]])
-
-def p_type(p):
-	'''type : INT_TYPE
-			| DOUBLE_TYPE
-			| CHAR_TYPE
-			| VOID_TYPE'''
-	p[0] = Node('decl_type',None,p[1])
-
 def p_assign(p):
     '''assign : identifier ASSIGN expr'''
-    p[0] = Node('assign',[p[3]],p[1])
+    p[0] = Node('assign',[p[1]]+[p[3]])
 
 def p_expr_group(p):
    '''expr : ROUND_OPEN expr ROUND_CLOSE'''
@@ -115,12 +109,20 @@ def p_identifier(p):
 	'''identifier : ID'''
 	p[0] = Node('id',None,p[1])
 
+# def p_if(p):
+# 	'''if : IF ROUND_OPEN condition ROUND_CLOSE if_body'''
+# 	p[0] = Node('if',[p[3]]+p[5])
+
+# def p_if_body(p):
+# 	'''if_body : body 
+# 			   | '''
+
 def p_expr_uminus(t):
     '''expr : MINUS expr %prec UMINUS'''
     t[0] = -t[2]
 
 def p_error(t):
-    print("Syntax error at: \""+ t.value+"\" in "+ str(t.lexpos) )
+    print("Syntax error before: \""+ t.value+"\" in "+ str(t.lexpos) )
 
 def p_empty(p):
     'empty :'
@@ -140,13 +142,13 @@ else:
 
 s = '''
 % MyMod{
+	a=1;
 	print x;
-	int a;
-	int x = 2 * a + 3;
+	x = 2 * a + 3;
 }
 '''
-node= (yacc.parse(s))
-node.print_node()
+#node= (yacc.parse(s))
+#node.print_node()
 
 def parse(s):
 	return (yacc.parse(s))
