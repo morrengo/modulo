@@ -51,25 +51,51 @@ def eval(node):
 			return int(node.info)
 		elif(node.node_type == 'double'):
 			return float(node.info)
+		elif(node.node_type == 'bool_literal'):
+			if(node.info == "true"):
+				return True
+			return False
 		elif(node.node_type == 'print'):
 			print eval(node.children[0])
+		elif(node.node_type == 'or'):
+			return eval(node.children[0]) or eval(node.children[1])
+		elif(node.node_type == 'and'):
+			return eval(node.children[0]) and eval(node.children[1])
+		elif(node.node_type == 'not'):
+			return not eval(node.children[0])
+		elif(node.node_type == '@='):
+			return eval(node.children[0]) != eval(node.children[1])
+		elif(node.node_type == '=='):
+			return eval(node.children[0]) == eval(node.children[1])
+		elif(node.node_type == '<'):
+			return eval(node.children[0]) < eval(node.children[1])
+		elif(node.node_type == '<='):
+			return eval(node.children[0]) <= eval(node.children[1])
+		elif(node.node_type == '>='):
+			return eval(node.children[0]) >= eval(node.children[1])
+		elif(node.node_type == '>'):
+			return eval(node.children[0]) > eval(node.children[1])
+		elif(node.node_type == 'while'):
+			while eval(node.children[0])==True :
+				for child in node.children[1:]:
+					eval(child)
 		else:
 			raise Exception("unsupported expression type \'"+node.node_type+"\'")
 	except Exception as e:
 		print str(e)
 
 s = '''
-% MyMod{
-	a=3;
-	c=a+3;
-	print c;
-	c= c/4.0;
-	c=c*5;
-	b = 2;
-	a= (b+1.0)*2+1.3;
-	print c+a;
+% silnia{
+	a=5;
+	b=1;
+	c=1;
+	while (c)<=a{
+		b=b*c;
+		c = c+1;
+	}
+	print b;
 }
 '''
 node = parser.parse(s)
-#node.print_node()
+node.print_node()
 eval(node)

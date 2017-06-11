@@ -10,6 +10,8 @@ reserved = {
 	'double': 'DOUBLE_TYPE',
 	'char'	: 'CHAR_TYPE',
 	'void' 	: 'VOID_TYPE',
+	'true'	: 'TRUE',
+	'false'	: 'FALSE'
 }
 tokens = 	['MODULO', 'INT', 'DOUBLE', 'PLUS', 'MINUS', 'TIMES', 'DIVIDE','AND', 'OR',
 			'EQUALS','NOT_EQUALS','ASSIGN','LESSER','LESSER_OR_EQ','GREATER','GREATER_OR_EQ','NOT',
