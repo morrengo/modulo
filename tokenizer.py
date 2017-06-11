@@ -11,14 +11,16 @@ reserved = {
 	'char'	: 'CHAR_TYPE',
 	'void' 	: 'VOID_TYPE',
 	'true'	: 'TRUE',
-	'false'	: 'FALSE'
+	'false'	: 'FALSE',
+	'len'	: 'LEN'
 }
-tokens = 	['MODULO', 'INT', 'DOUBLE', 'PLUS', 'MINUS', 'TIMES', 'DIVIDE','AND', 'OR',
+tokens = 	['MODULO', 'FUNCTION', 'INT', 'DOUBLE', 'PLUS', 'MINUS', 'TIMES', 'DIVIDE','AND', 'OR',
 			'EQUALS','NOT_EQUALS','ASSIGN','LESSER','LESSER_OR_EQ','GREATER','GREATER_OR_EQ','NOT',
 			'BRACE_OPEN', 'BRACE_CLOSE', 'ROUND_OPEN', 'ROUND_CLOSE', 'ARR_OPEN', 'ARR_CLOSE',
-			'SEMICOLON', 'ID'] +  list(reserved.values())
+			'QUOTE', 'TEXT', 'SEMICOLON', 'ID'] +  list(reserved.values())
 t_ignore 		=' \t\n'
 t_MODULO		=r'%'
+t_FUNCTION 		=' \?'
 t_DOUBLE		=r'(\d\.\d*)|([1-9]\d*\.\d*)'
 t_INT			=r'([1-9]\d*)|(\d)'
 t_PLUS			=r'\+'
@@ -41,20 +43,33 @@ t_ROUND_OPEN	=r'\('
 t_ROUND_CLOSE	=r'\)'
 t_ARR_OPEN		=r'\['
 t_ARR_CLOSE		=r'\]'
+t_QUOTE			=r'\"'
 t_SEMICOLON		=r';'
 def t_ID(t):
     r'[a-zA-Z_][a-zA-Z_0-9]*'
     t.type = reserved.get(t.value,'ID')    # Check for reserved words
     return t
 
+def t_TEXT(t):
+	r'\"[^\"]*\"'
+	t.value=t.value[1:-1]
+	return t
+
+def t_comment(t):
+	r'(?://[^\n]*|/\*(?:(?!\*/).|\n)*\*/)'
+	pass
+
 def t_error(t):
     print("Illegal character '%s'" % t.value[0])
     t.lexer.skip(1)
 
 lex.lex()
-
-'''lex.input("x=2-2*2*5 if ")
-while True:
-	tok = lex.token()
-	if not tok: break
-	print (tok.type + " : " + tok.value )'''
+# lex.input('''
+# % MyMod{
+# 	a= "212";
+# }
+# ''')
+# while True:
+# 	tok = lex.token()
+# 	print tok
+# 	if not tok: break

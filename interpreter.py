@@ -1,6 +1,8 @@
 import parser
+import sys
 scopes = []
 curr_scope={}
+
 node_types=["module","print","assign","declare","decl_type",
 	"+","-","*","/","int","double","id"]
 def push_scope():
@@ -8,8 +10,8 @@ def push_scope():
 	scopes.append(dict(curr_scope))
 	curr_scope={}
 
-def add_to_scope(definition,value):
-	curr_scope[definition]=value
+def add_to_scope(definition,val):
+	curr_scope[definition]=val
 
 def pop_scope():
 	global curr_scope
@@ -23,16 +25,47 @@ def get_from_scope(definition):
 
 def eval(node):
 	try:
-		if(node.node_type == "module"):
+		if(node.node_type == 'module'):
 			push_scope()
+			eval(node.children[0])
+			pop_scope()
+		elif(node.node_type == 'body'):
 			for child in node.children:
 				eval(child)
-			pop_scope()
 		elif(node.node_type == "assign"):
 			target = node.children[0]
 			expression = node.children[1]
 			val = eval(expression)
 			add_to_scope(target.info, val)
+		elif(node.node_type == "assign_proc"):
+			target = node.children[0]
+			expression = node.children[1]
+			add_to_scope(target.info, expression)
+		elif(node.node_type == "procedure"):
+			if(isinstance(get_from_scope(node.info),parser.Node)):
+				eval(get_from_scope(node.info))
+			else:
+				raise Exception("\'"+node.info+"\' is not a function or is undefined")
+
+		elif(node.node_type == 'print'):
+			sys.stdout.write(str(eval(node.children[0])))
+		elif(node.node_type == 'while'):
+			while eval(node.children[0])==True :
+				eval(node.children[1])
+
+		elif(node.node_type == 'if'):
+			if( eval(node.children[0]) == True):
+				eval(node.children[1])
+				return
+			if(len(node.children) > 2):
+				for child in node.children[2:]:
+					if(child.node_type == 'else'):
+						eval(child.children[0])
+						return
+					if(eval(child.children[0]) == True):
+						eval(child.children[1])
+						return
+
 		elif(node.node_type == '+'):
 			return eval(node.children[0]) + eval(node.children[1])
 		elif(node.node_type == '-'):
@@ -41,22 +74,7 @@ def eval(node):
 			return eval(node.children[0]) * eval(node.children[1])
 		elif(node.node_type == '/'):
 			return eval(node.children[0]) / eval(node.children[1])
-		elif(node.node_type == 'id'):
-			val = get_from_scope(node.info)
-			if val is not None:
-				return get_from_scope(node.info)
-			else:
-				raise Exception("undefined variable \'"+node.info+"\'")
-		elif(node.node_type == 'int'):
-			return int(node.info)
-		elif(node.node_type == 'double'):
-			return float(node.info)
-		elif(node.node_type == 'bool_literal'):
-			if(node.info == "true"):
-				return True
-			return False
-		elif(node.node_type == 'print'):
-			print eval(node.children[0])
+
 		elif(node.node_type == 'or'):
 			return eval(node.children[0]) or eval(node.children[1])
 		elif(node.node_type == 'and'):
@@ -75,10 +93,42 @@ def eval(node):
 			return eval(node.children[0]) >= eval(node.children[1])
 		elif(node.node_type == '>'):
 			return eval(node.children[0]) > eval(node.children[1])
-		elif(node.node_type == 'while'):
-			while eval(node.children[0])==True :
-				for child in node.children[1:]:
-					eval(child)
+
+		elif(node.node_type == 'id'):
+			val = get_from_scope(node.info)
+			if val is not None:
+				return get_from_scope(node.info)
+			else:
+				raise Exception("undefined variable \'"+node.info+"\'")
+		elif(node.node_type == 'text'):
+			return str(node.info)
+		elif(node.node_type == 'int'):
+			return int(node.info)
+		elif(node.node_type == 'double'):
+			return float(node.info)
+		elif(node.node_type == 'bool_literal'):
+			if(node.info == "true"):
+				return True
+			return False
+		elif(node.node_type == 'arr_index'):
+			val = get_from_scope(node.children[0])
+			if(not(isinstance(val,list) or isinstance(val,str))):
+				raise Exception("variable \'"+node.children[0]+"\' is not an array")
+				return
+			index = eval(node.children[1])
+			if(not isinstance(index,int)):
+				raise Exception("index of array \'"+node.children[0]+"\' is not an integer")
+				return
+			if(len(val)<=index):
+				raise Exception("index of array \'"+node.children[0]+"\' is out of range")
+				return
+			return val[index]
+		elif(node.node_type == 'len'):
+			val = eval(node.children[0])
+			if(not(isinstance(val,list) or isinstance(val,str))):
+				raise Exception("variable \'"+node.children[0]+"\' is not an array")
+				return
+			return len(val)
 		else:
 			raise Exception("unsupported expression type \'"+node.node_type+"\'")
 	except Exception as e:
@@ -86,16 +136,27 @@ def eval(node):
 
 s = '''
 % silnia{
-	a=5;
-	b=1;
-	c=1;
-	while (c)<=a{
-		b=b*c;
-		c = c+1;
-	}
-	print b;
+	wyswietl_ukosnie = {
+		c=0;
+		while c < len napis {
+			a=0;
+			while a < c {
+				print " ";
+				a = a+1;
+			}
+			print napis[c];
+			c = c+1;
+			print"\n";
+		}
+	};
+
+	napis = "omnipotent";
+	? wyswietl_ukosnie;
+	print "\n";
+	napis = "kuuupa";
+	? wyswietl_ukosnie;
 }
 '''
 node = parser.parse(s)
-node.print_node()
+#node.print_node()
 eval(node)
