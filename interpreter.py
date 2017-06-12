@@ -1,17 +1,33 @@
 import parser
 import sys
+
+class Scope:
+	def __init__(self,name,scope = None):
+		self.name = name
+		if scope:
+			self.scope=scope
+		else:
+			self.scope = {}
+	def add_to_scope(self,definition,val):
+		self.scope[definition]=val
+	def get_from_scope(self,definition):
+		try:
+			return self.scope[definition]
+		except:
+			return None
+	
+curr_scope = Scope('main')
 scopes = []
-curr_scope={}
 
 node_types=["module","print","assign","declare","decl_type",
 	"+","-","*","/","int","double","id"]
+
 def push_scope():
 	global curr_scope,scopes
-	scopes.append(dict(curr_scope))
-	curr_scope={}
+	scopes.append(curr_scope)
 
 def add_to_scope(definition,val):
-	curr_scope[definition]=val
+	curr_scope.add_to_scope(definition,val)
 
 def pop_scope():
 	global curr_scope
@@ -19,16 +35,20 @@ def pop_scope():
 
 def get_from_scope(definition):
 	try:
-		return curr_scope[definition]
+		return curr_scope.get_from_scope(definition)
 	except:
 		return None
 
 def eval(node):
+	global curr_scope
 	try:
 		if(node.node_type == 'module'):
 			push_scope()
+			curr_scope = Scope(node.info)
 			eval(node.children[0])
+			res = dict(curr_scope.scope)
 			pop_scope()
+			return res
 		elif(node.node_type == 'body'):
 			for child in node.children:
 				eval(child)
@@ -36,16 +56,44 @@ def eval(node):
 			target = node.children[0]
 			expression = node.children[1]
 			val = eval(expression)
-			add_to_scope(target.info, val)
+			if(target.node_type == 'inner'):
+				target.node_type = 'inner_assign'
+				target = eval(target)
+				target[0].add_to_scope(target[1],val)
+				return
+			add_to_scope(target.info,val)
 		elif(node.node_type == "assign_proc"):
 			target = node.children[0]
 			expression = node.children[1]
+			if(target.node_type == 'inner'):
+				target.node_type = 'inner_assign'
+				target = eval(target)
+				target[0].add_to_scope(target[1],expression)
+				return
 			add_to_scope(target.info, expression)
+		elif(node.node_type == "assign_mod"):
+			target = node.children[0]
+			mod = node.children[1]
+			if(target.node_type == 'inner'):
+				target.node_type = 'inner_assign'
+				target = eval(target)
+				target[0].add_to_scope(target[1],Scope('test',eval(mod)))
+				return
+			add_to_scope(target.info, Scope(target.info,eval(mod)))
 		elif(node.node_type == "procedure"):
-			if(isinstance(get_from_scope(node.info),parser.Node)):
-				eval(get_from_scope(node.info))
+			if(node.children[0].node_type == 'inner'):
+				node.children[0].node_type = 'inner_assign'
+				res =  eval(node.children[0])
+				scope = res[0]
+				node.children[0].node_type = 'inner'
+				old_scope = curr_scope
+				curr_scope = scope
+				eval(get_from_scope(res[1]))
+				curr_scope = old_scope
+			elif(isinstance(get_from_scope(node.children[0].info),parser.Node)):
+				eval(get_from_scope(node.children[0].info))
 			else:
-				raise Exception("\'"+node.info+"\' is not a function or is undefined")
+				raise Exception("\'"+node.node_type+"\' is not a function or is undefined")
 		elif(node.node_type == 'println'):
 			if node.children is None or len(node.children)==0:
 				print
@@ -98,6 +146,44 @@ def eval(node):
 		elif(node.node_type == '>'):
 			return eval(node.children[0]) > eval(node.children[1])
 
+		elif(node.node_type == 'inner'):
+			val = get_from_scope(node.children[0].info)
+			try:
+				if(node.children[1].node_type == 'id'):
+					val = val.get_from_scope(node.children[1].info)
+				else:
+					old_scope = curr_scope
+					curr_scope = val
+					val = eval(node.children[1])
+					curr_scope = old_scope
+			except:
+				raise Exception("variable doesn't have inner scope")
+				return
+			if val is not None:
+				return val
+			else:
+				raise Exception("undefined variable \'"+node.info+"\'")
+
+		elif(node.node_type == 'inner_assign'):
+			val = get_from_scope(node.children[0].info)
+			try:
+				if(node.children[1].node_type != 'id'):
+					node.children[1].node_type = 'inner_assign'
+					old_scope = curr_scope
+					curr_scope = val
+					ret_scope = val
+					val = eval(node.children[1])
+					curr_scope = old_scope
+				else:
+					return [val,node.children[1].info]
+			except:
+				raise Exception("variable doesn't have inner scope")
+				return
+			if val is not None:
+				return val
+			else:
+				raise Exception("undefined variable \'"+node.info+"\'")
+
 		elif(node.node_type == 'id'):
 			val = get_from_scope(node.info)
 			if val is not None:
@@ -146,7 +232,7 @@ def eval(node):
 		print str(e)
 
 s1 = '''
-% silnia{
+% {
 	wyswietl_ukosnie = {
 		c=0;
 		while c < len napis {
@@ -170,24 +256,65 @@ s1 = '''
 '''
 
 s2 = '''
-% test{
-	print_matrix = {
-		x=0;
-		while x<len matrix {
-			y=0;
-			while y<len matrix[x] {
-				print matrix[x][y];
-				print "\t";
-				y=y+1;
+% {
+	matrix_mod = %{
+		matrix = [];
+		print_matrix = {
+			x=0;
+			while x<len matrix {
+				y=0;
+				while y<len matrix[x] {
+					print matrix[x][y];
+					print "\t";
+					y=y+1;
+				}
+				x=x+1;
+				println;
 			}
-			x=x+1;
-			println;
-		}
+		};
 	};
-	//matrix=[[1,2,3,4],[5,6,7,8],[9,10,11,12]];
-	? print_matrix;
+	matrix_mod.matrix =
+		[[1,2 ,3 ,4 ],
+		 [5,6 ,7 ,8 ],
+		 [9,10,11,12]];
+	? matrix_mod.print_matrix;
 }
 '''
-node = parser.parse(s2)
+
+s3 = '''
+% {
+	a1=1;
+	a2 = %{
+		b1=2;
+		b2 = %{
+			c1=5;
+			c2 = %{
+				d1=10;
+			};
+		};
+	};
+	a2.b2.c2.d1 = 12;
+	println a2.b2.c2.d1;
+
+}
+'''
+s4='''
+% {
+	mod = %{
+		a=1;
+		fun1 ={
+			println "asd";
+		};
+	};
+	mod.mod2 = %{
+		fun2 = {
+			println 123;
+		};
+	};
+	? mod.fun1;
+	? mod.mod2.fun2;
+}
+'''
+node = parser.parse(s3)
 #node.print_node()
 eval(node)

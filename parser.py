@@ -34,8 +34,8 @@ precedence = (
 ###### MAIN PARTS ######
 
 def p_module(p):
-	'''module : MODULO ID body'''
-	p[0] = Node('module',[p[3]],p[2])
+	'''module : MODULO body'''
+	p[0] = Node('module',[p[2]])
 
 def p_body(p):
 	'''body : BRACE_OPEN lines BRACE_CLOSE'''
@@ -54,12 +54,20 @@ def p_line(p):
 			| print SEMICOLON
 			| if
 			| while
-			| procedure'''
+			| procedure SEMICOLON'''
 	p[0] = p[1]
+
+def p_procedure(p):
+	'''procedure : FUNCTION identifier'''
+	p[0] = Node('procedure',[p[2]])
 
 def p_while(p):
 	'''while : WHILE bool_expr body'''
 	p[0] = Node('while',[p[2]]+[p[3]])
+
+def p_assign_mod(p):
+	'''assign : identifier ASSIGN module'''
+	p[0] = Node('assign_mod',[p[1]]+[p[3]])
 
 def p_assign_proc(p):
 	'''assign : identifier ASSIGN body'''
@@ -69,10 +77,6 @@ def p_assign(p):
     '''assign : identifier ASSIGN expr
     		  | identifier ASSIGN bool_expr'''
     p[0] = Node('assign',[p[1]]+[p[3]])
-
-def p_procedure(p):
-	'''procedure : FUNCTION ID SEMICOLON'''
-	p[0] = Node('procedure',None,p[2])
 
 def p_print(p):
 	'''print : PRINT expr
@@ -201,16 +205,6 @@ def p_identifier_arr_ind(p):
 	'''factor : factor ARR_OPEN expr ARR_CLOSE'''
 	p[0] = Node('arr_index',[p[1]]+[p[3]])
 
-def p_identifier_arr(p):
-	'''factor : ARR_OPEN arr_body ARR_CLOSE
-	   		  | ARR_OPEN ARR_CLOSE'''
-	if (len (p) == 3):
-		p[0] = Node('arr',[])
-		return
-	else:
-		p[0] = Node('arr',p[2])
-
-
 def p_arr_body(p):
 	'''arr_body : expr COMA arr_body
 				| expr'''
@@ -235,9 +229,27 @@ def p_factor_id(p):
 	'''factor : identifier'''
 	p[0] = p[1]
 
+def p_identifier_arr(p):
+	'''identifier : ARR_OPEN arr_body ARR_CLOSE
+	   		  	  | ARR_OPEN ARR_CLOSE'''
+	if (len (p) == 3):
+		p[0] = Node('arr',[])
+		return
+	else:
+		p[0] = Node('arr',p[2])
+
 def p_factorExpr(p):
 	'''factor : expr'''	
 	p[0] = p[1]	
+
+def p_id_inner(p):
+	'''identifier : inner'''
+	p[0] = p[1]
+
+def p_inner(p):
+	'''inner : identifier DOT inner
+			 | identifier DOT identifier'''
+	p[0] = Node('inner',[p[1]]+[p[3]])
 
 def p_identifier(p):
 	'''identifier : ID'''
@@ -269,10 +281,12 @@ yacc.yacc(debug=True)
 else:
 	print "no file name specified in arguments"'''
 
-
 a = '''
-% silnia{
-	a= len a[1];
+% {
+	a={
+		println "123";
+	};
+	?a;
 }
 '''
 node= (yacc.parse(a))
