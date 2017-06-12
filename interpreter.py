@@ -46,7 +46,11 @@ def eval(node):
 				eval(get_from_scope(node.info))
 			else:
 				raise Exception("\'"+node.info+"\' is not a function or is undefined")
-
+		elif(node.node_type == 'println'):
+			if node.children is None or len(node.children)==0:
+				print
+			else:
+				print eval(node.children[0])
 		elif(node.node_type == 'print'):
 			sys.stdout.write(str(eval(node.children[0])))
 		elif(node.node_type == 'while'):
@@ -111,7 +115,7 @@ def eval(node):
 				return True
 			return False
 		elif(node.node_type == 'arr_index'):
-			val = get_from_scope(node.children[0])
+			val = eval(node.children[0])
 			if(not(isinstance(val,list) or isinstance(val,str))):
 				raise Exception("variable \'"+node.children[0]+"\' is not an array")
 				return
@@ -123,6 +127,13 @@ def eval(node):
 				raise Exception("index of array \'"+node.children[0]+"\' is out of range")
 				return
 			return val[index]
+		elif(node.node_type == 'arr'):
+			res = []
+			if(node.children == []):
+				return res
+			for child in node.children:
+				res = res + [eval(child)]
+			return res
 		elif(node.node_type == 'len'):
 			val = eval(node.children[0])
 			if(not(isinstance(val,list) or isinstance(val,str))):
@@ -134,7 +145,7 @@ def eval(node):
 	except Exception as e:
 		print str(e)
 
-s = '''
+s1 = '''
 % silnia{
 	wyswietl_ukosnie = {
 		c=0;
@@ -146,17 +157,28 @@ s = '''
 			}
 			print napis[c];
 			c = c+1;
-			print"\n";
+			println;
 		}
 	};
 
 	napis = "omnipotent";
 	? wyswietl_ukosnie;
 	print "\n";
-	napis = "kuuupa";
+	napis = "teeeeest";
 	? wyswietl_ukosnie;
 }
 '''
-node = parser.parse(s)
-#node.print_node()
+
+s2 = '''
+% test{
+	a=[1,2,"asd",123];
+	c=0;
+	while c< len a{
+		println a[c];
+		c = c+1;
+	}
+}
+'''
+node = parser.parse(s2)
+node.print_node()
 eval(node)

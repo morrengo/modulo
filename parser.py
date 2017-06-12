@@ -79,6 +79,15 @@ def p_print(p):
 			 | PRINT bool_expr'''
 	p[0] = Node('print',[p[2]])
 
+def p_println(p):
+	'''print : PRINTLN expr
+			 | PRINTLN bool_expr
+			 | PRINTLN '''
+	if len(p) == 2:
+		p[0] = Node('println')
+	else:
+		p[0] = Node('println',[p[2]])
+
 def p_if(p):
 	'''if : IF bool_expr body else_if
 		  | IF bool_expr body'''
@@ -111,10 +120,6 @@ def p_bool_expr(p):
 		p[0] = Node('or',[p[1]]+[p[3]])
 	else:
 		p[0] = p[1]
-
-# def p_bool_expr_group(p):
-# 	'''bool_expr : ROUND_OPEN bool_expr ROUND_CLOSE'''
-# 	p[0] = p[2]
 
 def p_bool_term(p):
 	'''bool_term : bool_term AND not_bool_factor 
@@ -160,7 +165,7 @@ def p_rel_op(p):
 			  | GREATER_OR_EQ'''
 	p[0]=p[1]
 
-###### NUMERIC EXPRESSION ######
+###### EXPRESSION ######
 
 def p_expr_group(p):
    '''expr : ROUND_OPEN expr ROUND_CLOSE'''
@@ -183,6 +188,28 @@ def p_term(p):
 def p_term_factor(p):
 	'''term : factor'''
 	p[0] = p[1]
+
+def p_identifier_arr_ind(p):
+	'''factor : identifier ARR_OPEN expr ARR_CLOSE'''
+	p[0] = Node('arr_index',[p[1]]+[p[3]])
+
+def p_identifier_arr(p):
+	'''factor : ARR_OPEN arr_body ARR_CLOSE
+	   		  | ARR_OPEN ARR_CLOSE'''
+	if (len (p) == 3):
+		p[0] = Node('arr',[])
+		return
+	else:
+		p[0] = Node('arr',p[2])
+
+
+def p_arr_body(p):
+	'''arr_body : expr COMA arr_body
+				| expr'''
+	if (len(p) == 4):
+		p[0] = [p[1]] + p[3]
+	else:
+		p[0] = [p[1]]
 
 def p_factor_int(p):
 	'''factor : INT'''
@@ -220,10 +247,6 @@ def p_text(p):
 	'''text : TEXT'''
 	p[0] = Node('text',None,p[1])
 
-def p_identifier_arr(p):
-	'''identifier : ID ARR_OPEN expr ARR_CLOSE'''
-	p[0] = Node('arr_index',[p[1]]+[p[3]])
-
 def p_expr_uminus(t):
     '''expr : MINUS expr %prec UMINUS'''
     t[0] = -t[2]
@@ -249,9 +272,7 @@ else:
 
 a = '''
 % silnia{
-	a=1;
-	b="asd";
-	print a;
+	a=[1,2,"asd",[1,3,4]];
 }
 '''
 node= (yacc.parse(a))

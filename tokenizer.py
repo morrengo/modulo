@@ -1,25 +1,27 @@
 import ply.lex as lex
 
 reserved = {
-	'print' : 'PRINT',
-    'if' 	: 'IF',
-    'else' 	: 'ELSE',
-    'elseif': 'ELSE_IF',
-    'while'	: 'WHILE',
-	'int' 	: 'INT_TYPE',
-	'double': 'DOUBLE_TYPE',
-	'char'	: 'CHAR_TYPE',
-	'void' 	: 'VOID_TYPE',
-	'true'	: 'TRUE',
-	'false'	: 'FALSE',
-	'len'	: 'LEN'
+	'print'  : 'PRINT',
+	'println': 'PRINTLN',
+    'if' 	 : 'IF',
+    'else' 	 : 'ELSE',
+    'elseif' : 'ELSE_IF',
+    'while'	 : 'WHILE',
+	'int' 	 : 'INT_TYPE',
+	'double' : 'DOUBLE_TYPE',
+	'char'	 : 'CHAR_TYPE',
+	'void' 	 : 'VOID_TYPE',
+	'true'	 : 'TRUE',
+	'false'	 : 'FALSE',
+	'len'	 : 'LEN'
 }
-tokens = 	['MODULO', 'FUNCTION', 'INT', 'DOUBLE', 'PLUS', 'MINUS', 'TIMES', 'DIVIDE','AND', 'OR',
+tokens = 	['MODULO', 'COMA', 'FUNCTION', 'INT', 'DOUBLE', 'PLUS', 'MINUS', 'TIMES', 'DIVIDE','AND', 'OR',
 			'EQUALS','NOT_EQUALS','ASSIGN','LESSER','LESSER_OR_EQ','GREATER','GREATER_OR_EQ','NOT',
 			'BRACE_OPEN', 'BRACE_CLOSE', 'ROUND_OPEN', 'ROUND_CLOSE', 'ARR_OPEN', 'ARR_CLOSE',
 			'QUOTE', 'TEXT', 'SEMICOLON', 'ID'] +  list(reserved.values())
 t_ignore 		=' \t\n'
 t_MODULO		=r'%'
+t_COMA			=r','
 t_FUNCTION 		=' \?'
 t_DOUBLE		=r'(\d\.\d*)|([1-9]\d*\.\d*)'
 t_INT			=r'([1-9]\d*)|(\d)'
