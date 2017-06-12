@@ -189,8 +189,16 @@ def p_term_factor(p):
 	'''term : factor'''
 	p[0] = p[1]
 
+def p_factor_id_len(p):
+	'''factor : LEN expr'''
+	p[0] = Node('len',[p[2]])
+
+def p_factor_text_len(p):
+	'''factor : LEN text'''
+	p[0] = Node('len',[p[2]])
+
 def p_identifier_arr_ind(p):
-	'''factor : identifier ARR_OPEN expr ARR_CLOSE'''
+	'''factor : factor ARR_OPEN expr ARR_CLOSE'''
 	p[0] = Node('arr_index',[p[1]]+[p[3]])
 
 def p_identifier_arr(p):
@@ -223,17 +231,9 @@ def p_factor_text(p):
 	'''factor : text '''
 	p[0] = p[1]
 
-def p_factor_text_len(p):
-	'''factor : LEN text'''
-	p[0] = Node('len',[p[2]])
-
 def p_factor_id(p):
 	'''factor : identifier'''
 	p[0] = p[1]
-
-def p_factor_id_len(p):
-	'''factor : LEN identifier'''
-	p[0] = Node('len',[p[2]])
 
 def p_factorExpr(p):
 	'''factor : expr'''	
@@ -272,7 +272,7 @@ else:
 
 a = '''
 % silnia{
-	a=[1,2,"asd",[1,3,4]];
+	a= len a[1];
 }
 '''
 node= (yacc.parse(a))

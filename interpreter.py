@@ -171,14 +171,23 @@ s1 = '''
 
 s2 = '''
 % test{
-	a=[1,2,"asd",123];
-	c=0;
-	while c< len a{
-		println a[c];
-		c = c+1;
-	}
+	print_matrix = {
+		x=0;
+		while x<len matrix {
+			y=0;
+			while y<len matrix[x] {
+				print matrix[x][y];
+				print "\t";
+				y=y+1;
+			}
+			x=x+1;
+			println;
+		}
+	};
+	//matrix=[[1,2,3,4],[5,6,7,8],[9,10,11,12]];
+	? print_matrix;
 }
 '''
 node = parser.parse(s2)
-node.print_node()
+#node.print_node()
 eval(node)
