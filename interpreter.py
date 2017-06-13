@@ -19,12 +19,10 @@ class Scope:
 curr_scope = Scope('main')
 scopes = []
 
-node_types=["module","print","assign","declare","decl_type",
-	"+","-","*","/","int","double","id"]
-
 def push_scope():
 	global curr_scope,scopes
 	scopes.append(curr_scope)
+	curr_scope = Scope('test',dict(curr_scope.scope))
 
 def add_to_scope(definition,val):
 	curr_scope.add_to_scope(definition,val)
@@ -49,9 +47,13 @@ def eval(node):
 			res = dict(curr_scope.scope)
 			pop_scope()
 			return res
+		elif(node.node_type == 'return'):
+			return eval(node.children[0])
 		elif(node.node_type == 'body'):
 			for child in node.children:
-				eval(child)
+				res = eval(child)
+				if(res is not None):
+					return res
 		elif(node.node_type == "assign"):
 			target = node.children[0]
 			expression = node.children[1]
@@ -71,6 +73,10 @@ def eval(node):
 				target[0].add_to_scope(target[1],expression)
 				return
 			add_to_scope(target.info, expression)
+		elif(node.node_type == 'args'):
+			for child in node.children:
+				eval(child)
+			#for child in node.children
 		elif(node.node_type == "assign_mod"):
 			target = node.children[0]
 			mod = node.children[1]
@@ -86,12 +92,20 @@ def eval(node):
 				res =  eval(node.children[0])
 				scope = res[0]
 				node.children[0].node_type = 'inner'
-				old_scope = curr_scope
+				push_scope()
 				curr_scope = scope
-				eval(get_from_scope(res[1]))
-				curr_scope = old_scope
+				ret = eval(get_from_scope(res[1]))
+				pop_scope()
+				return ret
 			elif(isinstance(get_from_scope(node.children[0].info),parser.Node)):
-				eval(get_from_scope(node.children[0].info))
+				fun = get_from_scope(node.children[0].info)
+				if len(node.children)==2 :
+					push_scope()
+					eval(node.children[1])
+					ret = eval(fun)
+					pop_scope()
+					return ret
+				return eval(fun)
 			else:
 				raise Exception("\'"+node.node_type+"\' is not a function or is undefined")
 		elif(node.node_type == 'println'):
@@ -103,19 +117,27 @@ def eval(node):
 			sys.stdout.write(str(eval(node.children[0])))
 		elif(node.node_type == 'while'):
 			while eval(node.children[0])==True :
-				eval(node.children[1])
+				res = eval(node.children[1])
+				if(res is not None):
+					return res
 
 		elif(node.node_type == 'if'):
 			if( eval(node.children[0]) == True):
-				eval(node.children[1])
+				ret = eval(node.children[1])
+				if(ret is not None):
+					return ret
 				return
 			if(len(node.children) > 2):
 				for child in node.children[2:]:
 					if(child.node_type == 'else'):
-						eval(child.children[0])
+						ret = eval(child.children[0])
+						if(ret is not None):
+							return ret
 						return
 					if(eval(child.children[0]) == True):
-						eval(child.children[1])
+						ret = eval(child.children[1])
+						if(ret is not None):
+							return ret
 						return
 
 		elif(node.node_type == '+'):
@@ -152,10 +174,10 @@ def eval(node):
 				if(node.children[1].node_type == 'id'):
 					val = val.get_from_scope(node.children[1].info)
 				else:
-					old_scope = curr_scope
+					push_scope()
 					curr_scope = val
 					val = eval(node.children[1])
-					curr_scope = old_scope
+					pop_scope()
 			except:
 				raise Exception("variable doesn't have inner scope")
 				return
@@ -169,11 +191,11 @@ def eval(node):
 			try:
 				if(node.children[1].node_type != 'id'):
 					node.children[1].node_type = 'inner_assign'
-					old_scope = curr_scope
+					push_scope()
 					curr_scope = val
 					ret_scope = val
 					val = eval(node.children[1])
-					curr_scope = old_scope
+					pop_scope()
 				else:
 					return [val,node.children[1].info]
 			except:
@@ -282,39 +304,65 @@ s2 = '''
 '''
 
 s3 = '''
-% {
-	a1=1;
-	a2 = %{
-		b1=2;
-		b2 = %{
-			c1=5;
-			c2 = %{
-				d1=10;
-			};
-		};
-	};
-	a2.b2.c2.d1 = 12;
-	println a2.b2.c2.d1;
-
+%{
+  a=10;
+  f={
+    println a;
+  	if(a<=1){
+  	  !a;
+  	} else {
+      !a * ?f(a=a-1);
+  	}
+  };
+  println ?f(a=7);
+  println a;
 }
 '''
 s4='''
 % {
-	mod = %{
-		a=1;
-		fun1 ={
-			println "asd";
+	var1 = 10;
+	mod1 = %{
+		mod2 = %{
+			map2elem={
+				?asd;
+				println res;
+			};
 		};
 	};
-	mod.mod2 = %{
-		fun2 = {
-			println 123;
+	mod1.mod2.asd ={
+		res=1234;
+	};
+	?mod1.mod2.map2elem;
+}'''
+
+s5='''
+% {
+	Math = %{
+		fibo_arg = 10;
+		fibo = {
+			if fibo_arg <= 1{
+				!fibo_arg;
+			} else {
+				!?fibo(fibo_arg = fibo_arg - 1)+
+				 ?fibo(fibo_arg = fibo_arg - 2);
+			}
 		};
 	};
-	? mod.fun1;
-	? mod.mod2.fun2;
+	println ?Math.fibo;
+
+	Math.fact_arg =10;
+	Math.fact ={
+		if fact_arg <= 1{
+			!fact_arg;
+		} else {
+			!fact_arg * ?fact(fact_arg = fact_arg-1);
+		}	
+	};
+	println ?Math.fact;
+	println ?Math.fact;
 }
 '''
-node = parser.parse(s3)
+
+node = parser.parse(s5)
 #node.print_node()
 eval(node)

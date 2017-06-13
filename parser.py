@@ -54,12 +54,36 @@ def p_line(p):
 			| print SEMICOLON
 			| if
 			| while
+			| return SEMICOLON
 			| procedure SEMICOLON'''
 	p[0] = p[1]
 
+def p_return(p):
+	'''return : RET expr'''
+	p[0] = Node('return',[p[2]])
+
 def p_procedure(p):
-	'''procedure : FUNCTION identifier'''
-	p[0] = Node('procedure',[p[2]])
+	'''procedure : FUNCTION identifier
+				 | FUNCTION identifier ROUND_OPEN args_def ROUND_CLOSE
+				 | FUNCTION identifier ROUND_OPEN ROUND_CLOSE'''
+	if(len(p) == 6):
+		p[0] = Node('procedure',[p[2]]+[p[4]])
+	elif(len(p)==5):
+		p[0] = Node('procedure',[p[2]]+[Node('args',[])])
+	else:
+		p[0] = Node('procedure',[p[2]])
+
+def p_args_def(p):
+	'''args_def : args'''
+	p[0] = Node('args',p[1])
+
+def p_args(p):
+	'''args : assign COMA args
+			| assign'''
+	if(len(p) == 4):
+		p[0] = [p[1]]+p[3]
+	else:
+		p[0] = [p[1]]
 
 def p_while(p):
 	'''while : WHILE bool_expr body'''
@@ -201,7 +225,7 @@ def p_factor_text_len(p):
 	'''factor : LEN text'''
 	p[0] = Node('len',[p[2]])
 
-def p_identifier_arr_ind(p):
+def p_factor_arr_ind(p):
 	'''factor : factor ARR_OPEN expr ARR_CLOSE'''
 	p[0] = Node('arr_index',[p[1]]+[p[3]])
 
@@ -226,7 +250,8 @@ def p_factor_text(p):
 	p[0] = p[1]
 
 def p_factor_id(p):
-	'''factor : identifier'''
+	'''factor : identifier
+			  | procedure'''
 	p[0] = p[1]
 
 def p_identifier_arr(p):
@@ -285,8 +310,9 @@ a = '''
 % {
 	a={
 		println "123";
+		!a;
 	};
-	?a;
+	?a.a.asd(a=12,b={println 5;});
 }
 '''
 node= (yacc.parse(a))

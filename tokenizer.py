@@ -7,20 +7,17 @@ reserved = {
     'else' 	 : 'ELSE',
     'elseif' : 'ELSE_IF',
     'while'	 : 'WHILE',
-	'int' 	 : 'INT_TYPE',
-	'double' : 'DOUBLE_TYPE',
-	'char'	 : 'CHAR_TYPE',
-	'void' 	 : 'VOID_TYPE',
 	'true'	 : 'TRUE',
 	'false'	 : 'FALSE',
 	'len'	 : 'LEN'
 }
-tokens = 	['MODULO', 'COMA', 'DOT', 'FUNCTION', 'INT', 'DOUBLE', 'PLUS', 'MINUS', 'TIMES', 'DIVIDE','AND', 'OR',
+tokens = 	['MODULO', 'RET', 'COMA', 'DOT', 'FUNCTION', 'INT', 'DOUBLE', 'PLUS', 'MINUS', 'TIMES', 'DIVIDE','AND', 'OR',
 			'EQUALS','NOT_EQUALS','ASSIGN','LESSER','LESSER_OR_EQ','GREATER','GREATER_OR_EQ','NOT',
 			'BRACE_OPEN', 'BRACE_CLOSE', 'ROUND_OPEN', 'ROUND_CLOSE', 'ARR_OPEN', 'ARR_CLOSE',
 			'QUOTE', 'TEXT', 'SEMICOLON', 'ID'] +  list(reserved.values())
 t_ignore 		=' \t\n'
 t_MODULO		=r'%'
+t_RET 			=r'!'
 t_COMA			=r','
 t_DOT			=r'\.'
 t_FUNCTION 		=' \?'
